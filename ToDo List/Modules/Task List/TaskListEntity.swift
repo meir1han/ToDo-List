@@ -9,8 +9,8 @@ import Foundation
 
 struct Task {
     let id: Int
-    let title: String
-    let description: String
-    let createdDate: Date
+    var title: String
+    var description: String
+    var createdDate: Date
     var isCompleted: Bool
 }

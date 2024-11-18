@@ -19,6 +19,8 @@ protocol AddTaskDelegate: AnyObject {
 class AddTaskViewController: UIViewController, AddTaskViewProtocol {
     var presenter: AddTaskPresenterProtocol?
     weak var delegate: AddTaskDelegate?
+    var editingTask: Task?
+
     
     private let titleField: UITextField = {
         let textField = UITextField()
@@ -47,6 +49,12 @@ class AddTaskViewController: UIViewController, AddTaskViewProtocol {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        
+        if let task = editingTask {
+            titleField.text = task.title
+            descriptionField.text = task.description
+            saveButton.setTitle("Update Task", for: .normal)
+        }
     }
 
     func setupUI() {
@@ -80,21 +88,25 @@ class AddTaskViewController: UIViewController, AddTaskViewProtocol {
             present(alert, animated: true, completion: nil)
             return
         }
-        
-        let newTask = Task(
-            id: Int.random(in: 1...1000),
-            title: title,
-            description: description,
-            createdDate: Date(),
-            isCompleted: false
-        )
-        
-        delegate?.didAddTask(newTask)
+
+        if var task = editingTask {
+            task.title = title
+            task.description = description
+            delegate?.didAddTask(task)
+        } else {
+            let newTask = Task(
+                id: Int.random(in: 1...1000),
+                title: title,
+                description: description,
+                createdDate: Date(),
+                isCompleted: false
+            )
+            delegate?.didAddTask(newTask)
+        }
+
         navigationController?.popViewController(animated: true)
-
-
-        presenter?.addTask(title: title, description: description)
     }
+
 
     func dismissView() {
         self.dismiss(animated: true, completion: nil)

@@ -11,6 +11,8 @@ import UIKit
 protocol TaskListRouterProtocol {
     static func createTaskListModule() -> UIViewController
     func navigateToAddTask(from view: TaskListViewProtocol)
+    func navigateToEditTask(from view: TaskListViewProtocol, task: Task)
+
 }
 
 class TaskListRouter: TaskListRouterProtocol {
@@ -39,6 +41,19 @@ class TaskListRouter: TaskListRouterProtocol {
 
         viewController.navigationController?.pushViewController(addTaskModule, animated: true)
     }
+
+    func navigateToEditTask(from view: TaskListViewProtocol, task: Task) {
+        guard let viewController = view as? UIViewController else { return }
+        let addTaskModule = AddTaskRouter.createAddTaskModule()
+
+        if let addTaskVC = addTaskModule as? AddTaskViewController {
+            addTaskVC.editingTask = task // Передаём задачу в AddTaskViewController
+            addTaskVC.delegate = viewController as? AddTaskDelegate
+        }
+
+        viewController.navigationController?.pushViewController(addTaskModule, animated: true)
+    }
+
 
 
 

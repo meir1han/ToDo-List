@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F495E00E2CEB2031003DA1DC /* TaskModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = F495E00C2CEB2031003DA1DC /* TaskModel.xcdatamodeld */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		F4AA20A82CE7593C00D177FA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -24,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		F495E00D2CEB2031003DA1DC /* TaskModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = TaskModel.xcdatamodel; sourceTree = "<group>"; };
 		F4AA20912CE7593900D177FA /* ToDo List.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ToDo List.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4AA20A72CE7593C00D177FA /* ToDo ListTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ToDo ListTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4AA20B12CE7593C00D177FA /* ToDo ListUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ToDo ListUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -88,6 +93,7 @@
 		F4AA20882CE7593900D177FA = {
 			isa = PBXGroup;
 			children = (
+				F495E00C2CEB2031003DA1DC /* TaskModel.xcdatamodeld */,
 				F4AA20932CE7593900D177FA /* ToDo List */,
 				F4AA20AA2CE7593C00D177FA /* ToDo ListTests */,
 				F4AA20B42CE7593C00D177FA /* ToDo ListUITests */,
@@ -249,6 +255,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F495E00E2CEB2031003DA1DC /* TaskModel.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -567,6 +574,19 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		F495E00C2CEB2031003DA1DC /* TaskModel.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				F495E00D2CEB2031003DA1DC /* TaskModel.xcdatamodel */,
+			);
+			currentVersion = F495E00D2CEB2031003DA1DC /* TaskModel.xcdatamodel */;
+			path = TaskModel.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = F4AA20892CE7593900D177FA /* Project object */;
 }

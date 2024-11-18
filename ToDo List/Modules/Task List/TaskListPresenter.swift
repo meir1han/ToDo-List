@@ -10,7 +10,13 @@ protocol TaskListPresenterProtocol {
     func numberOfTasks() -> Int
     func task(at index: Int) -> Task
     func navigateToAddTask()
-    func addTaskToList(_ task: Task) // Добавляем метод
+    func updateOrAddTask(_ task: Task) // Добавляем метод
+    func deleteTask(at index: Int)
+    func navigateToEditTask(at index: Int)
+    func filterTasks(with query: String)
+    func toggleTaskCompletion(at index: Int)
+
+
 }
 
 
@@ -44,10 +50,57 @@ class TaskListPresenter: TaskListPresenterProtocol, TaskListInteractorOutputProt
         router?.navigateToAddTask(from: view!)
     }
 
-    func addTaskToList(_ task: Task) {
-        tasks.append(task)
+    func updateOrAddTask(_ task: Task) {
+        if let index = tasks.firstIndex(where: { $0.id == task.id }) {
+            // Если задача уже существует, обновляем её
+            tasks[index] = task
+        } else {
+            // Если это новая задача, добавляем её
+            tasks.append(task)
+            
+        }
+        interactor?.saveTaskToCoreData(task: task)
+        view?.showTasks(tasks)
+        
+        
+    }
+    
+    func deleteTask(at index: Int) {
+        guard index < tasks.count else { return }
+        let task = tasks[index]
+        tasks.remove(at: index)
+        interactor?.deleteTaskFromCoreData(task: task)
         view?.showTasks(tasks)
     }
 
-}
+    func navigateToEditTask(at index: Int) {
+        guard index < tasks.count else { return }
+        let task = tasks[index]
+        router?.navigateToEditTask(from: view!, task: task)
+    }
+    
+    
+    func filterTasks(with query: String) {
+        if query.isEmpty {
+            view?.showTasks(tasks)
+        } else {
+            let filteredTasks = tasks.filter {
+                $0.title.lowercased().contains(query.lowercased()) ||
+                $0.description.lowercased().contains(query.lowercased())
+            }
+            view?.showTasks(filteredTasks)
+        }
+    }
 
+    func toggleTaskCompletion(at index: Int) {
+        guard index < tasks.count else { return }
+        tasks[index].isCompleted.toggle()
+        interactor?.saveTaskToCoreData(task: tasks[index])
+        view?.showTasks(tasks)
+    }
+
+    
+
+
+
+}
