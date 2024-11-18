@@ -18,7 +18,7 @@ class TaskTableViewCell: UITableViewCell {
     let descriptionLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .darkGray
+        label.textColor = .label
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -32,9 +32,26 @@ class TaskTableViewCell: UITableViewCell {
         return label
     }()
 
+    let circleButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.layer.cornerRadius = 15
+        button.layer.borderWidth = 2
+        button.layer.borderColor = UIColor.gray.cgColor
+        button.backgroundColor = .clear
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
+    var onEdit: (() -> Void)?
+    var onDelete: (() -> Void)?
+    
+    
+    var onStatusToggle: (() -> Void)?
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
+        addContextMenu()
     }
 
     required init?(coder: NSCoder) {
@@ -42,38 +59,119 @@ class TaskTableViewCell: UITableViewCell {
     }
 
     private func setupUI() {
+        contentView.addSubview(circleButton)
         contentView.addSubview(titleLabel)
         contentView.addSubview(descriptionLabel)
         contentView.addSubview(dateLabel)
 
         NSLayoutConstraint.activate([
+            circleButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            circleButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            circleButton.widthAnchor.constraint(equalToConstant: 30),
+            circleButton.heightAnchor.constraint(equalToConstant: 30),
+
             titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            titleLabel.leadingAnchor.constraint(equalTo: circleButton.trailingAnchor, constant: 16),
             titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
 
             descriptionLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-            descriptionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            descriptionLabel.leadingAnchor.constraint(equalTo: circleButton.trailingAnchor, constant: 16),
             descriptionLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
 
             dateLabel.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 4),
-            dateLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            dateLabel.leadingAnchor.constraint(equalTo: circleButton.trailingAnchor, constant: 16),
             dateLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             dateLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
         ])
+
+        circleButton.addTarget(self, action: #selector(circleButtonTapped), for: .touchUpInside)
+    }
+
+    private func addContextMenu() {
+        let interaction = UIContextMenuInteraction(delegate: self)
+        self.addInteraction(interaction)
+    }
+    
+    @objc private func circleButtonTapped() {
+        onStatusToggle?()
     }
 
     func configure(with task: Task) {
-        titleLabel.text = task.title
-        descriptionLabel.text = "\(task.description)"
-        dateLabel.text = "\(formattedDate(task.createdDate))"
-        titleLabel.textColor = task.isCompleted ? .gray : .black
+        // Настройка заголовка
+        if task.isCompleted {
+            let attributedString = NSAttributedString(
+                string: task.title,
+                attributes: [
+                    .strikethroughStyle: NSUnderlineStyle.single.rawValue,
+                    .foregroundColor: UIColor.gray
+                ]
+            )
+            titleLabel.attributedText = attributedString
+            
+            circleButton.setTitle("✔️", for: .normal)
+            circleButton.backgroundColor = .clear
+            circleButton.setTitleColor(.yellow, for: .normal)
+            circleButton.layer.borderColor = UIColor.yellow.cgColor
+        } else {
+            let attributedString = NSAttributedString(
+                string: task.title,
+                attributes: [
+                    .foregroundColor: UIColor.label
+                ]
+            )
+            titleLabel.attributedText = attributedString
+            
+            circleButton.setTitle("", for: .normal)
+            circleButton.backgroundColor = .clear
+            circleButton.setTitleColor(.clear, for: .normal)
+            circleButton.layer.borderColor = UIColor.gray.cgColor
+            
+        }
+
+        // Настройка описания
+        descriptionLabel.text = task.description
+        descriptionLabel.textColor = task.isCompleted ? .gray : .label
+
+        // Настройка даты
+        dateLabel.text = formattedDate(task.createdDate)
+
+        
     }
+
 
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "dd/MM/yy"
-//        formatter.dateStyle = .medium
-//        formatter.timeStyle = .short
         return formatter.string(from: date)
+    }
+}
+
+
+extension TaskTableViewCell: UIContextMenuInteractionDelegate {
+    func contextMenuInteraction(
+        _ interaction: UIContextMenuInteraction,
+        configurationForMenuAtLocation location: CGPoint
+    ) -> UIContextMenuConfiguration? {
+        return UIContextMenuConfiguration(
+            identifier: nil,
+            previewProvider: nil
+        ) { _ in
+            let editAction = UIAction(
+                title: "Edit",
+                image: UIImage(systemName: "pencil")
+            ) { [weak self] _ in
+                self?.onEdit?()
+            }
+
+            let deleteAction = UIAction(
+                title: "Delete",
+                image: UIImage(systemName: "trash"),
+                attributes: .destructive
+            ) { [weak self] _ in
+                self?.onDelete?()
+            }
+
+            return UIMenu(title: "", children: [editAction, deleteAction])
+        }
     }
 }

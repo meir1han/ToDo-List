@@ -58,7 +58,7 @@ class AddTaskViewController: UIViewController, AddTaskViewProtocol {
     }
 
     func setupUI() {
-        view.backgroundColor = .white
+//        view.backgroundColor = .systemBackground
 
         
         view.addSubview(titleField)

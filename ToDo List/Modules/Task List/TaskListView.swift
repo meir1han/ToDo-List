@@ -18,15 +18,30 @@ class TaskListViewController: UIViewController, TaskListViewProtocol {
     
     let searchBar = UISearchBar()
     private var filteredTasks: [Task] = []
+    
+    
+    private let toolbar: UIToolbar = {
+        let toolbar = UIToolbar()
+        toolbar.translatesAutoresizingMaskIntoConstraints = false
+        return toolbar
+    }()
+    
+    private var taskCountLabel: UIBarButtonItem?
+
+    
 
 
     override func viewDidLoad() {
         super.viewDidLoad()
+//        self.title = "Tasks"
         setupUI()
         presenter?.viewDidLoad()
         setupSearchBar()
+        setupNavigationBar()
 
+//        updateTaskCount()
     }
+    
 
     func setupUI() {
         view.addSubview(tableView)
@@ -36,20 +51,90 @@ class TaskListViewController: UIViewController, TaskListViewProtocol {
         tableView.register(TaskTableViewCell.self, forCellReuseIdentifier: "TaskCell")
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 60
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTask))
+//        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTask))
+        
+        setupToolbar()
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        toolbar.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: toolbar.topAnchor),
+
+            toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            toolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        ])
+
 
     }
     
+    
+    private func setupNavigationBar() {
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.title = "Tasks"
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithDefaultBackground()
+        appearance.largeTitleTextAttributes = [
+            .font: UIFont.boldSystemFont(ofSize: 34),
+            .foregroundColor: UIColor.label
+        ]
+        appearance.titleTextAttributes = [
+            .font: UIFont.boldSystemFont(ofSize: 17),
+            .foregroundColor: UIColor.label
+        ]
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+    }
+    
+    private func setupToolbar() {
+        view.addSubview(toolbar)
+
+        // Создаём кнопки
+        let editButton = UIBarButtonItem(
+            image: UIImage(systemName: "square.and.pencil"),
+            style: .plain,
+            target: self,
+            action: #selector(addTask)
+        )
+
+        // Инициализируем глобальное свойство `taskCountLabel`
+        taskCountLabel = UIBarButtonItem(
+            title: "Tasks: \(filteredTasks.count)",
+            style: .plain,
+            target: nil,
+            action: nil
+        )
+        taskCountLabel?.isEnabled = false // Делаем лейбл недоступным для нажатия
+
+        let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+
+        // Добавляем кнопки в toolbar
+        toolbar.setItems([editButton, flexibleSpace, taskCountLabel!], animated: false)
+    }
+
+  
     func setupSearchBar() {
         searchBar.delegate = self
         searchBar.placeholder = "Search tasks"
-        navigationItem.titleView = searchBar
+        searchBar.sizeToFit()
+        tableView.tableHeaderView = searchBar
     }
 
     func showTasks(_ tasks: [Task]) {
         self.filteredTasks = tasks
         tableView.reloadData()
+        
+        taskCountLabel?.title = "Tasks: \(filteredTasks.count)"
+
     }
+    
+//    @objc private func editTasks() {
+//        // Включаем или выключаем режим редактирования таблицы
+//        tableView.setEditing(!tableView.isEditing, animated: true)
+//    }
 
     
     @objc func addTask() {
@@ -71,50 +156,32 @@ extension TaskListViewController: UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "TaskCell")
+        // Используем кастомную ячейку
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath) as? TaskTableViewCell else {
+            return UITableViewCell()
+        }
 
         let task = filteredTasks[indexPath.row]
-        cell.textLabel?.text = task.title
-        if task.isCompleted {
-            let attributedString = NSAttributedString(
-                string: task.title,
-                attributes: [.strikethroughStyle: NSUnderlineStyle.single.rawValue]
-            )
-            cell.textLabel?.attributedText = attributedString
-            cell.textLabel?.textColor = .gray
-        } else {
-            // Обычный текст, если задача не выполнена
-            cell.textLabel?.text = task.title
-            cell.textLabel?.textColor = .black
+
+        // Конфигурация ячейки
+        cell.configure(with: task)
+
+        // Добавляем обработчик для переключения статуса задачи
+        cell.onStatusToggle = { [weak self] in
+            self?.presenter?.toggleTaskCompletion(at: indexPath.row)
         }
-//        cell.textLabel?.textColor = task.isCompleted ? .gray : .black
+        
+        // Обработчики действий
+        cell.onEdit = { [weak self] in
+            self?.presenter?.navigateToEditTask(at: indexPath.row)
+        }
 
-        let dateText = "\(formattedDate(task.createdDate))"
-        let descriptionText = "\(task.description)"
-
-        // Формируем подзаголовок с разным цветом для description и date
-        let attributedString = NSMutableAttributedString()
-
-        // Добавляем описание
-        let descriptionAttributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor: task.isCompleted ? UIColor.gray : UIColor.darkGray,
-            .font: UIFont.systemFont(ofSize: 14)
-        ]
-        attributedString.append(NSAttributedString(string: descriptionText + "\n", attributes: descriptionAttributes))
-
-        // Добавляем дату
-        let dateAttributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor: UIColor.gray,
-            .font: UIFont.systemFont(ofSize: 12)
-        ]
-        attributedString.append(NSAttributedString(string: dateText, attributes: dateAttributes))
-
-        cell.detailTextLabel?.attributedText = attributedString
-        cell.detailTextLabel?.numberOfLines = 0 // Поддержка многострочного текста
+        cell.onDelete = { [weak self] in
+            self?.presenter?.deleteTask(at: indexPath.row)
+        }
 
         return cell
     }
-
 
 
 }

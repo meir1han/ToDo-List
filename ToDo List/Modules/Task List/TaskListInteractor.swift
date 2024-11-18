@@ -31,10 +31,55 @@ class TaskListInteractor: TaskListInteractorInputProtocol {
     func fetchTasks() {
         DispatchQueue.global(qos: .background).async {
             let tasks = self.loadTasksFromCoreData()
-            DispatchQueue.main.async {
-                self.presenter?.didFetchTasks(tasks)
+            
+            if tasks.isEmpty {
+                // Если задач нет, загружаем из API
+                self.fetchTasksFromAPI()
+            } else {
+                DispatchQueue.main.async {
+                    self.presenter?.didFetchTasks(tasks)
+                }
             }
         }
+    }
+    
+    private func fetchTasksFromAPI() {
+        guard let url = URL(string: "https://dummyjson.com/todos") else { return }
+
+        let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                print("Error fetching tasks: \(error)")
+                return
+            }
+
+            guard let data = data else { return }
+            do {
+                let decodedResponse = try JSONDecoder().decode(TodoResponse.self, from: data)
+                let tasks = decodedResponse.todos.map { todo in
+                    Task(
+                        id: todo.id,
+                        title: todo.todo,
+                        description: "Description not provided", // Заполняем пустым описанием
+                        createdDate: Date(), // Используем текущую дату
+                        isCompleted: todo.completed
+                    )
+                }
+
+                // Сохраняем задачи в Core Data
+                tasks.forEach { self.saveTaskToCoreData(task: $0) }
+
+                // Передаём задачи в Presenter
+                DispatchQueue.main.async {
+                    self.presenter?.didFetchTasks(tasks)
+                }
+
+            } catch {
+                print("Failed to decode tasks: \(error)")
+            }
+        }
+        task.resume()
     }
 
     func loadTasksFromCoreData() -> [Task] {
