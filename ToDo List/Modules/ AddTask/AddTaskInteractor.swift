@@ -1,5 +1,5 @@
 //
-//  Interactor.swift
+//  AddTaskInteractor.swift
 //  ToDo List
 //
 //  Created by Meirkhan Nishonov on 18.11.2024.
@@ -20,7 +20,7 @@ class AddTaskInteractor: AddTaskInteractorInputProtocol {
 
     func saveTask(title: String, description: String) {
         DispatchQueue.global(qos: .background).async {
-            // Здесь логика сохранения задачи (например, через Core Data)
+            
             let newTask = Task(
                 id: Int.random(in: 1...1000),
                 title: title,
@@ -28,7 +28,7 @@ class AddTaskInteractor: AddTaskInteractorInputProtocol {
                 createdDate: Date(),
                 isCompleted: false
             )
-            // Симуляция сохранения
+            
             DispatchQueue.main.async {
                 self.presenter?.didSaveTask()
             }

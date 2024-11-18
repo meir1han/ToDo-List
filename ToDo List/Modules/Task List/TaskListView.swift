@@ -1,5 +1,5 @@
 //
-//  View.swift
+//  TaskListView.swift
 //  ToDo List
 //
 //  Created by Meirkhan Nishonov on 15.11.2024.
@@ -27,10 +27,17 @@ class TaskListViewController: UIViewController, TaskListViewProtocol {
         tableView.frame = view.bounds
         tableView.dataSource = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "TaskCell")
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTask))
+
     }
 
     func showTasks(_ tasks: [Task]) {
         tableView.reloadData()
+    }
+    
+    @objc func addTask() {
+        presenter?.navigateToAddTask()
     }
 }
 
@@ -48,3 +55,8 @@ extension TaskListViewController: UITableViewDataSource {
     }
 }
 
+extension TaskListViewController: AddTaskDelegate {
+    func didAddTask(_ task: Task) {
+        presenter?.addTaskToList(task)
+    }
+}
