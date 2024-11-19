@@ -23,7 +23,7 @@ class AddTaskViewController: UIViewController, AddTaskViewProtocol, UITextViewDe
 
     private let titleField: UITextView = {
         let textView = UITextView()
-        textView.font = UIFont.boldSystemFont(ofSize: 32)
+        textView.font = UIFont.boldSystemFont(ofSize: 34)
         textView.textColor = .label
         textView.textAlignment = .left
         textView.isScrollEnabled = false
