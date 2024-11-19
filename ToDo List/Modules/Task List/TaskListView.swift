@@ -32,14 +32,14 @@ class TaskListViewController: UIViewController, TaskListViewProtocol {
 
 
     override func viewDidLoad() {
+        navigationItem.backButtonTitle = "Назад"
+        navigationController?.navigationBar.tintColor = .yellow
         super.viewDidLoad()
-//        self.title = "Tasks"
         setupUI()
         presenter?.viewDidLoad()
         setupSearchBar()
         setupNavigationBar()
 
-//        updateTaskCount()
     }
     
 
@@ -51,7 +51,6 @@ class TaskListViewController: UIViewController, TaskListViewProtocol {
         tableView.register(TaskTableViewCell.self, forCellReuseIdentifier: "TaskCell")
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 60
-//        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTask))
         
         setupToolbar()
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -74,9 +73,11 @@ class TaskListViewController: UIViewController, TaskListViewProtocol {
     
     private func setupNavigationBar() {
         navigationController?.navigationBar.prefersLargeTitles = true
-        navigationItem.title = "Tasks"
+        navigationItem.title = "Задачи"
         let appearance = UINavigationBarAppearance()
         appearance.configureWithDefaultBackground()
+        appearance.backgroundColor = UIColor.systemBackground
+
         appearance.largeTitleTextAttributes = [
             .font: UIFont.boldSystemFont(ofSize: 34),
             .foregroundColor: UIColor.label
@@ -91,50 +92,62 @@ class TaskListViewController: UIViewController, TaskListViewProtocol {
     
     private func setupToolbar() {
         view.addSubview(toolbar)
-
-        // Создаём кнопки
+        
         let editButton = UIBarButtonItem(
-            image: UIImage(systemName: "square.and.pencil"),
+            image: UIImage(systemName: "square.and.pencil")?.withConfiguration(
+                UIImage.SymbolConfiguration(pointSize: 22, weight: .regular)
+            ),
             style: .plain,
             target: self,
             action: #selector(addTask)
         )
-
-        // Инициализируем глобальное свойство `taskCountLabel`
+        editButton.tintColor = .yellow
+        
         taskCountLabel = UIBarButtonItem(
-            title: "Tasks: \(filteredTasks.count)",
+            title: "\(filteredTasks.count) Задач",
             style: .plain,
             target: nil,
             action: nil
         )
-        taskCountLabel?.isEnabled = false // Делаем лейбл недоступным для нажатия
+        taskCountLabel?.setTitleTextAttributes([
+            .font: UIFont.systemFont(ofSize: 11),
+            .foregroundColor: UIColor.red,
+        ], for: .normal)
+        taskCountLabel?.isEnabled = false
 
-        let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        let flexibleSpace1 = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        let flexibleSpace2 = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
 
-        // Добавляем кнопки в toolbar
-        toolbar.setItems([editButton, flexibleSpace, taskCountLabel!], animated: false)
+        toolbar.setItems([flexibleSpace1, taskCountLabel!, flexibleSpace2, editButton], animated: false)
     }
+
 
   
     func setupSearchBar() {
+        let searchBarContainer = UIView(frame: CGRect(x: 0, y: 0, width: tableView.bounds.width, height: 56))
+        searchBarContainer.backgroundColor = .clear
+        
+
         searchBar.delegate = self
-        searchBar.placeholder = "Search tasks"
+        searchBar.placeholder = "Search"
         searchBar.sizeToFit()
-        tableView.tableHeaderView = searchBar
+        
+        searchBar.frame = CGRect(x: 10, y: 10, width: searchBarContainer.bounds.width - 20, height: 36) // Учитываем отступы
+        searchBarContainer.addSubview(searchBar)
+        
+        tableView.tableHeaderView = searchBarContainer
     }
+
 
     func showTasks(_ tasks: [Task]) {
         self.filteredTasks = tasks
         tableView.reloadData()
         
-        taskCountLabel?.title = "Tasks: \(filteredTasks.count)"
+        taskCountLabel?.title = "\(filteredTasks.count) Задач"
 
     }
     
-//    @objc private func editTasks() {
-//        // Включаем или выключаем режим редактирования таблицы
-//        tableView.setEditing(!tableView.isEditing, animated: true)
-//    }
+
 
     
     @objc func addTask() {
@@ -144,8 +157,7 @@ class TaskListViewController: UIViewController, TaskListViewProtocol {
     func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "dd/MM/yy"
-//        formatter.dateStyle = .medium
-//        formatter.timeStyle = .short
+
         return formatter.string(from: date)
     }
 }
@@ -156,22 +168,18 @@ extension TaskListViewController: UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        // Используем кастомную ячейку
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath) as? TaskTableViewCell else {
             return UITableViewCell()
         }
 
         let task = filteredTasks[indexPath.row]
 
-        // Конфигурация ячейки
         cell.configure(with: task)
 
-        // Добавляем обработчик для переключения статуса задачи
         cell.onStatusToggle = { [weak self] in
             self?.presenter?.toggleTaskCompletion(at: indexPath.row)
         }
         
-        // Обработчики действий
         cell.onEdit = { [weak self] in
             self?.presenter?.navigateToEditTask(at: indexPath.row)
         }
@@ -202,13 +210,11 @@ extension TaskListViewController: UITableViewDelegate {
             return nil
         }
 
-        // Действие "Delete"
         let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { [weak self] _, _, completionHandler in
             self?.presenter?.deleteTask(at: indexPath.row)
             completionHandler(true)
         }
 
-        // Действие "Complete/Incomplete"
         let completeAction = UIContextualAction(
             style: .normal,
             title: task.isCompleted ? "Incomplete" : "Complete"
@@ -217,7 +223,6 @@ extension TaskListViewController: UITableViewDelegate {
             completionHandler(true)
         }
 
-        // Возвращаем оба действия
         return UISwipeActionsConfiguration(actions: [deleteAction, completeAction])
     }
 

@@ -27,13 +27,11 @@ class TaskListInteractor: TaskListInteractorInputProtocol {
         return (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     }
 
-    // Загрузка задач из Core Data
     func fetchTasks() {
         DispatchQueue.global(qos: .background).async {
             let tasks = self.loadTasksFromCoreData()
             
             if tasks.isEmpty {
-                // Если задач нет, загружаем из API
                 self.fetchTasksFromAPI()
             } else {
                 DispatchQueue.main.async {
@@ -61,16 +59,14 @@ class TaskListInteractor: TaskListInteractorInputProtocol {
                     Task(
                         id: todo.id,
                         title: todo.todo,
-                        description: "Description not provided", // Заполняем пустым описанием
-                        createdDate: Date(), // Используем текущую дату
+                        description: "Description not provided",
+                        createdDate: Date(),
                         isCompleted: todo.completed
                     )
                 }
 
-                // Сохраняем задачи в Core Data
                 tasks.forEach { self.saveTaskToCoreData(task: $0) }
 
-                // Передаём задачи в Presenter
                 DispatchQueue.main.async {
                     self.presenter?.didFetchTasks(tasks)
                 }
@@ -101,20 +97,18 @@ class TaskListInteractor: TaskListInteractorInputProtocol {
         }
     }
 
-    // Сохранение задачи в Core Data
+    
     func saveTaskToCoreData(task: Task) {
         let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "id == %d", task.id)
 
         do {
             if let existingTask = try context.fetch(fetchRequest).first {
-                // Обновляем существующую задачу
                 existingTask.title = task.title
                 existingTask.taskDescription = task.description
                 existingTask.createdDate = task.createdDate
                 existingTask.isCompleted = task.isCompleted
             } else {
-                // Создаём новую задачу
                 let newTask = TaskEntity(context: context)
                 newTask.id = Int64(task.id)
                 newTask.title = task.title
@@ -130,7 +124,6 @@ class TaskListInteractor: TaskListInteractorInputProtocol {
     }
 
 
-    // Удаление задачи из Core Data
     func deleteTaskFromCoreData(task: Task) {
         let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "id == %d", task.id)

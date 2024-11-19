@@ -10,7 +10,7 @@ protocol TaskListPresenterProtocol {
     func numberOfTasks() -> Int
     func task(at index: Int) -> Task
     func navigateToAddTask()
-    func updateOrAddTask(_ task: Task) // Добавляем метод
+    func updateOrAddTask(_ task: Task) 
     func deleteTask(at index: Int)
     func navigateToEditTask(at index: Int)
     func filterTasks(with query: String)
@@ -40,7 +40,6 @@ class TaskListPresenter: TaskListPresenterProtocol, TaskListInteractorOutputProt
         return tasks[index]
     }
 
-    // Реализация метода протокола TaskListInteractorOutputProtocol
     func didFetchTasks(_ tasks: [Task]) {
         self.tasks = tasks
         view?.showTasks(tasks)
@@ -52,10 +51,8 @@ class TaskListPresenter: TaskListPresenterProtocol, TaskListInteractorOutputProt
 
     func updateOrAddTask(_ task: Task) {
         if let index = tasks.firstIndex(where: { $0.id == task.id }) {
-            // Если задача уже существует, обновляем её
             tasks[index] = task
         } else {
-            // Если это новая задача, добавляем её
             tasks.append(task)
             
         }

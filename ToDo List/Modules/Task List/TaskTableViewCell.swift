@@ -17,7 +17,7 @@ class TaskTableViewCell: UITableViewCell {
 
     let descriptionLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont.systemFont(ofSize: 12)
         label.textColor = .label
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -97,7 +97,6 @@ class TaskTableViewCell: UITableViewCell {
     }
 
     func configure(with task: Task) {
-        // Настройка заголовка
         if task.isCompleted {
             let attributedString = NSAttributedString(
                 string: task.title,
@@ -108,10 +107,10 @@ class TaskTableViewCell: UITableViewCell {
             )
             titleLabel.attributedText = attributedString
             
-            circleButton.setTitle("✔️", for: .normal)
             circleButton.backgroundColor = .clear
-            circleButton.setTitleColor(.yellow, for: .normal)
             circleButton.layer.borderColor = UIColor.yellow.cgColor
+            circleButton.setImage(UIImage(systemName: "checkmark"), for: .normal)
+            circleButton.tintColor = .yellow
         } else {
             let attributedString = NSAttributedString(
                 string: task.title,
@@ -121,22 +120,18 @@ class TaskTableViewCell: UITableViewCell {
             )
             titleLabel.attributedText = attributedString
             
-            circleButton.setTitle("", for: .normal)
             circleButton.backgroundColor = .clear
-            circleButton.setTitleColor(.clear, for: .normal)
             circleButton.layer.borderColor = UIColor.gray.cgColor
-            
+            circleButton.setImage(nil, for: .normal) // Убираем иконку
+            circleButton.tintColor = .clear
         }
 
-        // Настройка описания
         descriptionLabel.text = task.description
         descriptionLabel.textColor = task.isCompleted ? .gray : .label
 
-        // Настройка даты
         dateLabel.text = formattedDate(task.createdDate)
-
-        
     }
+
 
 
     private func formattedDate(_ date: Date) -> String {

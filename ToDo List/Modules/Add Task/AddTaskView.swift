@@ -15,77 +15,81 @@ protocol AddTaskDelegate: AnyObject {
     func didAddTask(_ task: Task)
 }
 
-
-class AddTaskViewController: UIViewController, AddTaskViewProtocol {
+class AddTaskViewController: UIViewController, AddTaskViewProtocol, UITextFieldDelegate {
     var presenter: AddTaskPresenterProtocol?
     weak var delegate: AddTaskDelegate?
-    var editingTask: Task?
+    var editingTask: Task? 
+    private var isTaskSaved = false
 
-    
     private let titleField: UITextField = {
         let textField = UITextField()
+        textField.borderStyle = .none
+        textField.font = UIFont.boldSystemFont(ofSize: 32)
+        textField.textColor = .label
+        textField.textAlignment = .left
         textField.placeholder = "Enter title"
-        textField.borderStyle = .roundedRect
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
 
     private let descriptionField: UITextField = {
         let textField = UITextField()
+        textField.borderStyle = .none
+        textField.font = UIFont.systemFont(ofSize: 18)
+        textField.textColor = .label
+        textField.textAlignment = .left
         textField.placeholder = "Enter description"
-        textField.borderStyle = .roundedRect
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
 
-    private let saveButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Save Task", for: .normal)
-        button.addTarget(self, action: #selector(saveTask), for: .touchUpInside)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .systemBackground
         setupUI()
-        
+
+        titleField.delegate = self
+        descriptionField.delegate = self
+
         if let task = editingTask {
             titleField.text = task.title
             descriptionField.text = task.description
-            saveButton.setTitle("Update Task", for: .normal)
         }
     }
 
-    func setupUI() {
-//        view.backgroundColor = .systemBackground
-
-        
+    private func setupUI() {
         view.addSubview(titleField)
         view.addSubview(descriptionField)
-        view.addSubview(saveButton)
 
-        
         NSLayoutConstraint.activate([
             titleField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            titleField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            titleField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            titleField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            titleField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 
             descriptionField.topAnchor.constraint(equalTo: titleField.bottomAnchor, constant: 20),
-            descriptionField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            descriptionField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-
-            saveButton.topAnchor.constraint(equalTo: descriptionField.bottomAnchor, constant: 30),
-            saveButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            descriptionField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            descriptionField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            descriptionField.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
         ])
     }
 
-    @objc func saveTask() {
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        syncTaskData()
+    }
+
+    private func syncTaskData() {
+        guard var task = editingTask else { return }
+        task.title = titleField.text ?? ""
+        task.description = descriptionField.text ?? ""
+        editingTask = task
+    }
+
+    private func saveTaskData() {
+        guard !isTaskSaved else { return }
+        isTaskSaved = true
+
         guard let title = titleField.text, !title.isEmpty,
-            let description = descriptionField.text, !description.isEmpty else {
-            let alert = UIAlertController(title: "Error", message: "Please fill all fields", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-            present(alert, animated: true, completion: nil)
+              let description = descriptionField.text, !description.isEmpty else {
             return
         }
 
@@ -103,10 +107,13 @@ class AddTaskViewController: UIViewController, AddTaskViewProtocol {
             )
             delegate?.didAddTask(newTask)
         }
-
-        navigationController?.popViewController(animated: true)
     }
 
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        syncTaskData()
+        saveTaskData()
+    }
 
     func dismissView() {
         self.dismiss(animated: true, completion: nil)
