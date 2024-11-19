@@ -19,10 +19,12 @@ class TaskTableViewCell: UITableViewCell {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 12)
         label.textColor = .label
-        label.numberOfLines = 0
+        label.numberOfLines = 2
+        label.lineBreakMode = .byTruncatingTail
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
+
 
     let dateLabel: UILabel = {
         let label = UILabel()
@@ -122,7 +124,7 @@ class TaskTableViewCell: UITableViewCell {
             
             circleButton.backgroundColor = .clear
             circleButton.layer.borderColor = UIColor.gray.cgColor
-            circleButton.setImage(nil, for: .normal) // Убираем иконку
+            circleButton.setImage(nil, for: .normal)
             circleButton.tintColor = .clear
         }
 

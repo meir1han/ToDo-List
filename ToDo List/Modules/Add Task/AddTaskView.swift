@@ -15,32 +15,47 @@ protocol AddTaskDelegate: AnyObject {
     func didAddTask(_ task: Task)
 }
 
-class AddTaskViewController: UIViewController, AddTaskViewProtocol, UITextFieldDelegate {
+class AddTaskViewController: UIViewController, AddTaskViewProtocol, UITextViewDelegate {
     var presenter: AddTaskPresenterProtocol?
     weak var delegate: AddTaskDelegate?
-    var editingTask: Task? 
+    var editingTask: Task?
     private var isTaskSaved = false
 
-    private let titleField: UITextField = {
-        let textField = UITextField()
-        textField.borderStyle = .none
-        textField.font = UIFont.boldSystemFont(ofSize: 32)
-        textField.textColor = .label
-        textField.textAlignment = .left
-        textField.placeholder = "Enter title"
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        return textField
+    private let titleField: UITextView = {
+        let textView = UITextView()
+        textView.font = UIFont.boldSystemFont(ofSize: 32)
+        textView.textColor = .label
+        textView.textAlignment = .left
+        textView.isScrollEnabled = false
+        textView.backgroundColor = .clear
+        textView.translatesAutoresizingMaskIntoConstraints = false
+        textView.textContainer.lineBreakMode = .byWordWrapping
+        textView.textContainerInset = .zero
+        textView.textContainer.lineFragmentPadding = 0
+        return textView
     }()
 
-    private let descriptionField: UITextField = {
-        let textField = UITextField()
-        textField.borderStyle = .none
-        textField.font = UIFont.systemFont(ofSize: 18)
-        textField.textColor = .label
-        textField.textAlignment = .left
-        textField.placeholder = "Enter description"
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        return textField
+    private let dateLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 16)
+        label.textColor = .secondaryLabel
+        label.textAlignment = .left
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
+    private let descriptionField: UITextView = {
+        let textView = UITextView()
+        textView.font = UIFont.systemFont(ofSize: 18)
+        textView.textColor = .label
+        textView.textAlignment = .left
+        textView.isScrollEnabled = false
+        textView.backgroundColor = .clear
+        textView.translatesAutoresizingMaskIntoConstraints = false
+        textView.textContainer.lineBreakMode = .byWordWrapping
+        textView.textContainerInset = .zero
+        textView.textContainer.lineFragmentPadding = 0
+        return textView
     }()
 
     override func viewDidLoad() {
@@ -54,11 +69,15 @@ class AddTaskViewController: UIViewController, AddTaskViewProtocol, UITextFieldD
         if let task = editingTask {
             titleField.text = task.title
             descriptionField.text = task.description
+            dateLabel.text = "\(formattedDate(task.createdDate))"
+        } else {
+            dateLabel.text = "\(formattedDate(Date()))"
         }
     }
 
     private func setupUI() {
         view.addSubview(titleField)
+        view.addSubview(dateLabel)
         view.addSubview(descriptionField)
 
         NSLayoutConstraint.activate([
@@ -66,15 +85,21 @@ class AddTaskViewController: UIViewController, AddTaskViewProtocol, UITextFieldD
             titleField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             titleField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 
-            descriptionField.topAnchor.constraint(equalTo: titleField.bottomAnchor, constant: 20),
+            dateLabel.topAnchor.constraint(equalTo: titleField.bottomAnchor, constant: 8),
+            dateLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            dateLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+
+            descriptionField.topAnchor.constraint(equalTo: dateLabel.bottomAnchor, constant: 20),
             descriptionField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             descriptionField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             descriptionField.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
         ])
     }
 
-    func textFieldDidEndEditing(_ textField: UITextField) {
-        syncTaskData()
+    func textViewDidChange(_ textView: UITextView) {
+        UIView.setAnimationsEnabled(false)
+        view.layoutIfNeeded()
+        UIView.setAnimationsEnabled(true)
     }
 
     private func syncTaskData() {
@@ -117,5 +142,11 @@ class AddTaskViewController: UIViewController, AddTaskViewProtocol, UITextFieldD
 
     func dismissView() {
         self.dismiss(animated: true, completion: nil)
+    }
+
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd/MM/yy"
+        return formatter.string(from: date)
     }
 }
