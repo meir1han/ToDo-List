@@ -12,12 +12,13 @@ import UIKit
 protocol TaskListInteractorInputProtocol {
     func fetchTasks()
     func saveTaskToCoreData(task: Task)
-    func loadTasksFromCoreData() -> [Task]
-    func deleteTaskFromCoreData(task: Task)
+    func loadTasksFromCoreData(completion: @escaping ([Task]) -> Void)
+    func deleteTaskFromCoreData(task: Task, completion: @escaping (Bool) -> Void)
 }
 
 protocol TaskListInteractorOutputProtocol: AnyObject {
     func didFetchTasks(_ tasks: [Task])
+    func didFailWithError(_ error: Error)
 }
 
 class TaskListInteractor: TaskListInteractorInputProtocol {
@@ -29,13 +30,13 @@ class TaskListInteractor: TaskListInteractorInputProtocol {
 
     func fetchTasks() {
         DispatchQueue.global(qos: .background).async {
-            let tasks = self.loadTasksFromCoreData()
-            
-            if tasks.isEmpty {
-                self.fetchTasksFromAPI()
-            } else {
-                DispatchQueue.main.async {
-                    self.presenter?.didFetchTasks(tasks)
+            self.loadTasksFromCoreData { tasks in
+                if tasks.isEmpty {
+                    self.fetchTasksFromAPI()
+                } else {
+                    DispatchQueue.main.async {
+                        self.presenter?.didFetchTasks(tasks)
+                    }
                 }
             }
         }
@@ -48,7 +49,9 @@ class TaskListInteractor: TaskListInteractorInputProtocol {
             guard let self = self else { return }
 
             if let error = error {
-                print("Error fetching tasks: \(error)")
+                DispatchQueue.main.async {
+                    self.presenter?.didFailWithError(error)
+                }
                 return
             }
 
@@ -72,70 +75,79 @@ class TaskListInteractor: TaskListInteractorInputProtocol {
                 }
 
             } catch {
-                print("Failed to decode tasks: \(error)")
+                DispatchQueue.main.async {
+                    self.presenter?.didFailWithError(error)
+                }
             }
         }
         task.resume()
     }
 
-    func loadTasksFromCoreData() -> [Task] {
-        let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
-        do {
-            let taskEntities = try context.fetch(fetchRequest)
-            return taskEntities.map {
-                Task(
-                    id: Int($0.id),
-                    title: $0.title ?? "",
-                    description: $0.taskDescription ?? "",
-                    createdDate: $0.createdDate ?? Date(),
-                    isCompleted: $0.isCompleted
-                )
+    func loadTasksFromCoreData(completion: @escaping ([Task]) -> Void) {
+        DispatchQueue.global(qos: .background).async {
+            let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+            do {
+                let taskEntities = try self.context.fetch(fetchRequest)
+                let tasks = taskEntities.map {
+                    Task(
+                        id: Int($0.id),
+                        title: $0.title ?? "",
+                        description: $0.taskDescription ?? "",
+                        createdDate: $0.createdDate ?? Date(),
+                        isCompleted: $0.isCompleted
+                    )
+                }
+                completion(tasks)
+            } catch {
+                print("Failed to fetch tasks: \(error)")
+                completion([])
             }
-        } catch {
-            print("Failed to fetch tasks: \(error)")
-            return []
         }
     }
 
-    
     func saveTaskToCoreData(task: Task) {
-        let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "id == %d", task.id)
+        DispatchQueue.global(qos: .background).async {
+            let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id == %d", task.id)
 
-        do {
-            if let existingTask = try context.fetch(fetchRequest).first {
-                existingTask.title = task.title
-                existingTask.taskDescription = task.description
-                existingTask.createdDate = task.createdDate
-                existingTask.isCompleted = task.isCompleted
-            } else {
-                let newTask = TaskEntity(context: context)
-                newTask.id = Int64(task.id)
-                newTask.title = task.title
-                newTask.taskDescription = task.description
-                newTask.createdDate = task.createdDate
-                newTask.isCompleted = task.isCompleted
+            do {
+                if let existingTask = try self.context.fetch(fetchRequest).first {
+                    existingTask.title = task.title
+                    existingTask.taskDescription = task.description
+                    existingTask.createdDate = task.createdDate
+                    existingTask.isCompleted = task.isCompleted
+                } else {
+                    let newTask = TaskEntity(context: self.context)
+                    newTask.id = Int64(task.id)
+                    newTask.title = task.title
+                    newTask.taskDescription = task.description
+                    newTask.createdDate = task.createdDate
+                    newTask.isCompleted = task.isCompleted
+                }
+                try self.context.save()
+            } catch {
+                print("Failed to save task: \(error)")
             }
-
-            try context.save()
-        } catch {
-            print("Failed to save task: \(error)")
         }
     }
 
+    func deleteTaskFromCoreData(task: Task, completion: @escaping (Bool) -> Void) {
+        DispatchQueue.global(qos: .background).async {
+            let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id == %d", task.id)
 
-    func deleteTaskFromCoreData(task: Task) {
-        let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "id == %d", task.id)
-
-        do {
-            if let taskEntity = try context.fetch(fetchRequest).first {
-                context.delete(taskEntity)
-                try context.save()
+            do {
+                if let taskEntity = try self.context.fetch(fetchRequest).first {
+                    self.context.delete(taskEntity)
+                    try self.context.save()
+                    completion(true)
+                } else {
+                    completion(false)
+                }
+            } catch {
+                print("Failed to delete task: \(error)")
+                completion(false)
             }
-        } catch {
-            print("Failed to delete task: \(error)")
         }
     }
 }
-

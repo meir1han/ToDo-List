@@ -16,7 +16,7 @@ protocol AddTaskDelegate: AnyObject {
 }
 
 class AddTaskViewController: UIViewController, AddTaskViewProtocol, UITextViewDelegate {
-    var presenter: AddTaskPresenterProtocol?
+
     weak var delegate: AddTaskDelegate?
     var editingTask: Task?
     private var isTaskSaved = false

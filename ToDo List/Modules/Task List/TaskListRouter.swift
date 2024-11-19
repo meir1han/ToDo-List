@@ -47,7 +47,7 @@ class TaskListRouter: TaskListRouterProtocol {
         let addTaskModule = AddTaskRouter.createAddTaskModule()
 
         if let addTaskVC = addTaskModule as? AddTaskViewController {
-            addTaskVC.editingTask = task // Передаём задачу в AddTaskViewController
+            addTaskVC.editingTask = task
             addTaskVC.delegate = viewController as? AddTaskDelegate
         }
 

@@ -5,21 +5,19 @@
 //  Created by Meirkhan Nishonov on 18.11.2024.
 //
 
+import Foundation
+
 protocol TaskListPresenterProtocol {
     func viewDidLoad()
     func numberOfTasks() -> Int
     func task(at index: Int) -> Task
     func navigateToAddTask()
-    func updateOrAddTask(_ task: Task) 
+    func updateOrAddTask(_ task: Task)
     func deleteTask(at index: Int)
     func navigateToEditTask(at index: Int)
     func filterTasks(with query: String)
     func toggleTaskCompletion(at index: Int)
-
-
 }
-
-
 
 class TaskListPresenter: TaskListPresenterProtocol, TaskListInteractorOutputProtocol {
     weak var view: TaskListViewProtocol?
@@ -29,7 +27,16 @@ class TaskListPresenter: TaskListPresenterProtocol, TaskListInteractorOutputProt
     private var tasks: [Task] = []
 
     func viewDidLoad() {
-        interactor?.fetchTasks()
+        interactor?.loadTasksFromCoreData { [weak self] tasks in
+            guard let self = self else { return }
+            if tasks.isEmpty {
+                self.interactor?.fetchTasks()
+            } else {
+                DispatchQueue.main.async {
+                    self.didFetchTasks(tasks)
+                }
+            }
+        }
     }
 
     func numberOfTasks() -> Int {
@@ -42,9 +49,16 @@ class TaskListPresenter: TaskListPresenterProtocol, TaskListInteractorOutputProt
 
     func didFetchTasks(_ tasks: [Task]) {
         self.tasks = tasks
-        view?.showTasks(tasks)
+        DispatchQueue.main.async {
+            self.view?.showTasks(tasks)
+        }
     }
-    
+
+    func didFailWithError(_ error: Error) {
+        print("Error: \(error.localizedDescription)")
+        // Optionally inform the view about the error.
+    }
+
     func navigateToAddTask() {
         router?.navigateToAddTask(from: view!)
     }
@@ -54,20 +68,24 @@ class TaskListPresenter: TaskListPresenterProtocol, TaskListInteractorOutputProt
             tasks[index] = task
         } else {
             tasks.append(task)
-            
         }
         interactor?.saveTaskToCoreData(task: task)
         view?.showTasks(tasks)
-        
-        
     }
-    
+
     func deleteTask(at index: Int) {
         guard index < tasks.count else { return }
         let task = tasks[index]
         tasks.remove(at: index)
-        interactor?.deleteTaskFromCoreData(task: task)
-        view?.showTasks(tasks)
+        interactor?.deleteTaskFromCoreData(task: task) { success in
+            if success {
+                DispatchQueue.main.async {
+                    self.view?.showTasks(self.tasks)
+                }
+            } else {
+                print("Failed to delete task from Core Data.")
+            }
+        }
     }
 
     func navigateToEditTask(at index: Int) {
@@ -75,8 +93,7 @@ class TaskListPresenter: TaskListPresenterProtocol, TaskListInteractorOutputProt
         let task = tasks[index]
         router?.navigateToEditTask(from: view!, task: task)
     }
-    
-    
+
     func filterTasks(with query: String) {
         if query.isEmpty {
             view?.showTasks(tasks)
@@ -95,9 +112,4 @@ class TaskListPresenter: TaskListPresenterProtocol, TaskListInteractorOutputProt
         interactor?.saveTaskToCoreData(task: tasks[index])
         view?.showTasks(tasks)
     }
-
-    
-
-
-
 }

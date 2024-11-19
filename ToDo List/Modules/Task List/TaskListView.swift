@@ -132,7 +132,7 @@ class TaskListViewController: UIViewController, TaskListViewProtocol {
         searchBar.placeholder = "Search"
         searchBar.sizeToFit()
         
-        searchBar.frame = CGRect(x: 10, y: 10, width: searchBarContainer.bounds.width - 20, height: 36) // Учитываем отступы
+        searchBar.frame = CGRect(x: 10, y: 10, width: searchBarContainer.bounds.width - 20, height: 36)
         searchBarContainer.addSubview(searchBar)
         
         tableView.tableHeaderView = searchBarContainer
@@ -154,12 +154,6 @@ class TaskListViewController: UIViewController, TaskListViewProtocol {
         presenter?.navigateToAddTask()
     }
     
-    func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd/MM/yy"
-
-        return formatter.string(from: date)
-    }
 }
 
 extension TaskListViewController: UITableViewDataSource {
@@ -210,14 +204,14 @@ extension TaskListViewController: UITableViewDelegate {
             return nil
         }
 
-        let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { [weak self] _, _, completionHandler in
+        let deleteAction = UIContextualAction(style: .destructive, title: "Удалить") { [weak self] _, _, completionHandler in
             self?.presenter?.deleteTask(at: indexPath.row)
             completionHandler(true)
         }
 
         let completeAction = UIContextualAction(
             style: .normal,
-            title: task.isCompleted ? "Incomplete" : "Complete"
+            title: task.isCompleted ? "Незавершенный" : "Завершенный"
         ) { [weak self] _, _, completionHandler in
             self?.presenter?.toggleTaskCompletion(at: indexPath.row)
             completionHandler(true)
