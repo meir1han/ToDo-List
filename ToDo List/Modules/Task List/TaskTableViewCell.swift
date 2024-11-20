@@ -46,6 +46,7 @@ class TaskTableViewCell: UITableViewCell {
 
     var onEdit: (() -> Void)?
     var onDelete: (() -> Void)?
+    var onShare: (() -> Void)?
     
     
     var onStatusToggle: (() -> Void)?
@@ -154,21 +155,28 @@ extension TaskTableViewCell: UIContextMenuInteractionDelegate {
             previewProvider: nil
         ) { _ in
             let editAction = UIAction(
-                title: "Edit",
-                image: UIImage(systemName: "pencil")
+                title: "Редактировать",
+                image: UIImage(systemName: "square.and.pencil")
             ) { [weak self] _ in
                 self?.onEdit?()
             }
 
+            let shareAction = UIAction(
+                title: "Поделиться",
+                image: UIImage(systemName: "square.and.arrow.up")
+            ) { [weak self] _ in
+                self?.onShare?()
+            }
+            
             let deleteAction = UIAction(
-                title: "Delete",
+                title: "Удалить",
                 image: UIImage(systemName: "trash"),
                 attributes: .destructive
             ) { [weak self] _ in
                 self?.onDelete?()
             }
 
-            return UIMenu(title: "", children: [editAction, deleteAction])
+            return UIMenu(title: "", children: [editAction, shareAction, deleteAction])
         }
     }
 }

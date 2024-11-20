@@ -13,10 +13,12 @@ protocol TaskListPresenterProtocol {
     func task(at index: Int) -> Task
     func navigateToAddTask()
     func updateOrAddTask(_ task: Task)
+    func shareTask(at index: Int)
     func deleteTask(at index: Int)
     func navigateToEditTask(at index: Int)
     func filterTasks(with query: String)
     func toggleTaskCompletion(at index: Int)
+    
 }
 
 class TaskListPresenter: TaskListPresenterProtocol, TaskListInteractorOutputProtocol {
@@ -72,6 +74,16 @@ class TaskListPresenter: TaskListPresenterProtocol, TaskListInteractorOutputProt
         interactor?.saveTaskToCoreData(task: task)
         view?.showTasks(tasks)
     }
+    
+    func shareTask(at index: Int) {
+        guard index < tasks.count else { return }
+        let task = tasks[index]
+
+        let shareText = "Задача: \(task.title)\nОписание: \(task.description)"
+
+        view?.presentShareSheet(with: shareText)
+    }
+
 
     func deleteTask(at index: Int) {
         guard index < tasks.count else { return }

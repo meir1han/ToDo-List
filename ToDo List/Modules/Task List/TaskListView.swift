@@ -9,6 +9,7 @@ import UIKit
 
 protocol TaskListViewProtocol: AnyObject {
     func showTasks(_ tasks: [Task])
+    func presentShareSheet(with text: String)
 }
 
 class TaskListViewController: UIViewController, TaskListViewProtocol {
@@ -147,6 +148,12 @@ class TaskListViewController: UIViewController, TaskListViewProtocol {
 
     }
     
+    func presentShareSheet(with text: String) {
+        let activityViewController = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        activityViewController.popoverPresentationController?.sourceView = self.view
+        self.present(activityViewController, animated: true, completion: nil)
+    }
+    
 
 
     
@@ -178,10 +185,14 @@ extension TaskListViewController: UITableViewDataSource {
             self?.presenter?.navigateToEditTask(at: indexPath.row)
         }
 
+        cell.onShare = { [weak self] in
+            self?.presenter?.shareTask(at: indexPath.row)
+        }
         cell.onDelete = { [weak self] in
             self?.presenter?.deleteTask(at: indexPath.row)
         }
-
+        
+    
         return cell
     }
 
